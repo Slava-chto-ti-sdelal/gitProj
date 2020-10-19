@@ -1,0 +1,49 @@
+
+from functools import wraps
+import time
+import datetime
+
+
+def logger(filename):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            LOGGER_FORMAT = '''\
+                Start time: {start_time}
+                Args: {args}
+                {return_value}
+                End time: {end_time}
+                Execution time: {exec_seconds} seconds
+            '''
+            
+            start = time.time()
+            result = func(*args, **kwargs)
+            end = time.time()
+            
+            with open(filename, 'w') as log:
+                log.writelines(
+                    LOGGER_FORMAT.format(
+                        start_time=datetime.datetime.fromtimestamp(start), 
+                        args=args,
+                        return_value=('-' if not result else 'Return {}'.format(result)), 
+                        end_time=datetime.datetime.fromtimestamp(end),
+                        exec_seconds=round((end - start), 5)
+                    )
+                )
+            return result
+        return wrapper
+    return decorator
+
+        
+@logger('new_log.txt')
+def fib_last_digit(n):
+    def fibgen():
+        a, b = 0, 1
+        while True:
+            yield a
+            a, b = b, a + b
+    n = int(n)
+    f = fibgen()
+    for _ in range(n-1):
+        next(f)
+    return str(next(f))[-1]
